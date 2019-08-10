@@ -4,6 +4,7 @@ const utils = require('./lib/hashUtils');
 const partials = require('express-partials');
 const bodyParser = require('body-parser');
 const Auth = require('./middleware/auth');
+const CookieParse = require('./middleware/cookieParser');
 const models = require('./models');
 
 const app = express();
@@ -14,11 +15,19 @@ app.use(partials());
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, '../public')));
-
+app.use(CookieParse);
+app.use(Auth.createSession);
+// app.use()
 
 
 app.get('/',
 (req, res) => {
+  // console.log('REDIRECTED');
+  // Cookiparse(req, res, next = () => {});
+  // Auth.createSession(req, res, next = () => {})
+  // .then(() => {
+  //   res.render('index');
+  // })
   res.render('index');
 });
 
@@ -85,10 +94,14 @@ app.post('/signup', (req,res) => {
       if(data === undefined) {
         return models.Users.create(req.body)
         .then ((respond)=>{
-          res.send('User created!')
+          //res.setHeader('location', '/')
+          // console.log('REDIRECTING', req.bodyy);
+          res.redirect('/');
+          res.send('User created!');
         })
       } else {
-        res.send("User exist!")
+        res.setHeader('location', '/signup');
+        res.send('User exist!');
       }
    })
 })
@@ -99,12 +112,16 @@ app.post('/login',(req, res) => {
     if (data === undefined) {
       res.setHeader('location', '/login');
       res.send('User does not exist. Try again!');
+
     } else {
       if (models.Users.compare(req.body.password, data.password, data.salt)) {
-        res.setHeader('location', '/');
-        // res.statusCode = 200;
-        res.send('Success Login!');
+        res.redirect(300, '/');
+        // Cookiparse(req, res, next = () => {});
+        // return Auth.createSession(req, res, next = () => {})
+        // .then(() => {res.send('Success Login!')})
+
       } else {
+
         // res.statusCode = 404;
         res.setHeader('location', '/login');
         res.send('Bad login. Try again!');
