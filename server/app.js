@@ -17,17 +17,17 @@ app.use(express.static(path.join(__dirname, '../public')));
 
 
 
-app.get('/', 
+app.get('/',
 (req, res) => {
   res.render('index');
 });
 
-app.get('/create', 
+app.get('/create',
 (req, res) => {
   res.render('index');
 });
 
-app.get('/links', 
+app.get('/links',
 (req, res, next) => {
   models.Links.getAll()
     .then(links => {
@@ -38,7 +38,7 @@ app.get('/links',
     });
 });
 
-app.post('/links', 
+app.post('/links',
 (req, res, next) => {
   var url = req.body.url;
   if (!models.Links.isValidUrl(url)) {
@@ -79,6 +79,39 @@ app.post('/links',
 /************************************************************/
 
 
+app.post('/signup', (req,res) => {
+   return models.Users.get(req.body)
+   .then ((data)=> {
+      if(data === undefined) {
+        return models.Users.create(req.body)
+        .then ((respond)=>{
+          res.send('User created!')
+        })
+      } else {
+        res.send("User exist!")
+      }
+   })
+})
+
+app.post('/login',(req, res) => {
+  return models.Users.get(req.body)
+  .then ((data)=>{
+    if (data === undefined) {
+      res.setHeader('location', '/login');
+      res.send('User does not exist. Try again!');
+    } else {
+      if (models.Users.compare(req.body.password, data.password, data.salt)) {
+        res.setHeader('location', '/');
+        // res.statusCode = 200;
+        res.send('Success Login!');
+      } else {
+        // res.statusCode = 404;
+        res.setHeader('location', '/login');
+        res.send('Bad login. Try again!');
+      }
+    }
+  })
+})
 
 /************************************************************/
 // Handle the code parameter route last - if all other routes fail
