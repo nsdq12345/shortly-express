@@ -50,6 +50,10 @@ get({username}) {
   return super.get.call(this,{username})
 }
 
+getUserById({id}) {
+  return super.get.call(this,{id})
+}
+
 }
 
 

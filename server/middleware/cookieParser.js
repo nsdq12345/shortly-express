@@ -12,6 +12,7 @@ const parseCookies = (req, res, next) => {
   } else {
     req.cookies = {};
   }
+
   next();
 };
 
