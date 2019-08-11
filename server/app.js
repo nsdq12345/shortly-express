@@ -26,6 +26,7 @@ app.all('/logout',(req,res,next) => {
   .then(() => {
     res.clearCookie('shortlyid');
     res.cookie('shortlyid', '');
+    res.send(':)');
   });
 })
 
@@ -52,9 +53,9 @@ app.get('/create',
 
 app.get('/links',
 (req, res, next) => {
-  // if(!models.Sessions.isLoggedIn(req.session)) {
-  //   res.redirect('/login');
-  // }
+  if(!models.Sessions.isLoggedIn(req.session)) {
+    res.redirect('/login');
+  }
 
   models.Links.getAll()
     .then(links => {
@@ -68,7 +69,9 @@ app.get('/links',
 app.post('/links',
 (req, res, next) => {
   var url = req.body.url;
+  console.log(url);
   if (!models.Links.isValidUrl(url)) {
+    console.log('HIT');
     // send back a 404 if link is not valid
     return res.sendStatus(404);
   }
