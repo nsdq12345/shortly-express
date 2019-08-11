@@ -20,24 +20,42 @@ app.use(Auth.createSession);
 // app.use()
 
 
-app.get('/',
+app.all('/logout',(req,res,next) => {
+  var shortlyCookie = req.cookies.shortlyid;
+  models.Sessions.delete({hash: shortlyCookie})
+  .then(() => {
+    res.clearCookie('shortlyid');
+    res.cookie('shortlyid', '');
+  });
+})
+
+app.all('/',
 (req, res) => {
-  // console.log('REDIRECTED');
-  // Cookiparse(req, res, next = () => {});
-  // Auth.createSession(req, res, next = () => {})
-  // .then(() => {
-  //   res.render('index');
-  // })
-  res.render('index');
+
+  // req.redirect('/login');
+  var session = req.session;
+  if (!models.Sessions.isLoggedIn(session)) {
+    res.redirect('/login');
+  } else {
+     res.render('index');
+  }
 });
 
 app.get('/create',
 (req, res) => {
-  res.render('index');
+  if(!models.Sessions.isLoggedIn(req.session)) {
+    res.redirect('/login')
+  } else {
+    res.render('index');
+  }
 });
 
 app.get('/links',
 (req, res, next) => {
+  // if(!models.Sessions.isLoggedIn(req.session)) {
+  //   res.redirect('/login');
+  // }
+
   models.Links.getAll()
     .then(links => {
       res.status(200).send(links);
@@ -94,23 +112,32 @@ app.post('/signup', (req,res) => {
       if(data === undefined) {
         return models.Users.create(req.body)
         .then ((respond)=>{
-          //res.setHeader('location', '/')
+          return models.Sessions.update({hash: res.cookies.shortlyid.value}, {userId: respond.insertId})
+            .then((data) => {
+              res.redirect('/');
+            })
+          //res.setHeader('location', '/')gi
           // console.log('REDIRECTING', req.bodyy);
-          res.redirect('/');
-          res.send('User created!');
+
+          //res.send('User created!');
         })
       } else {
-        res.setHeader('location', '/signup');
+        res.redirect('/signup');
         res.send('User exist!');
       }
    })
 })
 
+app.get('/login', (req, res) => {
+  console.log('HELP');
+  app.render('login');
+});
+
 app.post('/login',(req, res) => {
   return models.Users.get(req.body)
   .then ((data)=>{
     if (data === undefined) {
-      res.setHeader('location', '/login');
+      res.redirect('/login');
       res.send('User does not exist. Try again!');
 
     } else {
@@ -123,7 +150,7 @@ app.post('/login',(req, res) => {
       } else {
 
         // res.statusCode = 404;
-        res.setHeader('location', '/login');
+        res.redirect('/login');
         res.send('Bad login. Try again!');
       }
     }
